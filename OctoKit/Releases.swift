@@ -72,6 +72,19 @@ public extension Octokit {
         }
     }
 
+    /// Fetches the list of releases.
+    /// - Parameters:
+    ///   - session: RequestKitURLSession, defaults to URLSession.shared()
+    ///   - owner: The user or organization that owns the repositories.
+    ///   - repository: The name of the repository.
+    #if !canImport(FoundationNetworking)
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func listReleases(_ session: RequestKitURLSession = URLSession.shared, owner: String, repository: String) async throws -> [Release] {
+        let router = ReleaseRouter.listReleases(configuration, owner, repository)
+        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Release].self)
+    }
+    #endif
+
     /// Creates a new release.
     /// - Parameters:
     ///   - session: RequestKitURLSession, defaults to URLSession.shared()
@@ -110,6 +123,29 @@ public extension Octokit {
             }
         }
     }
+
+    /// Creates a new release.
+    /// - Parameters:
+    ///   - session: RequestKitURLSession, defaults to URLSession.shared()
+    ///   - owner: The user or organization that owns the repositories.
+    ///   - repo: The repository on which the release needs to be created.
+    ///   - tagName: The name of the tag.
+    ///   - targetCommitish: Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository's default branch (usually master).
+    ///   - name: The name of the release.
+    ///   - body: Text describing the contents of the tag.
+    ///   - prerelease: `true` to create a draft (unpublished) release, `false` to create a published one. Default: `false`.
+    ///   - draft: `true` to identify the release as a prerelease. `false` to identify the release as a full release. Default: `false`.
+    #if !canImport(FoundationNetworking)
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func postRelease(_ session: RequestKitURLSession = URLSession.shared, owner: String, repository: String, tagName: String, targetCommitish: String? = nil, name: String? = nil,
+                     body: String? = nil, prerelease: Bool = false, draft: Bool = false) async throws -> Release
+    {
+        let router = ReleaseRouter.postRelease(configuration, owner, repository, tagName, targetCommitish, name, body, prerelease, draft)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
+        return try await router.post(session, decoder: decoder, expectedResultType: Release.self)
+    }
+    #endif
 }
 
 // MARK: Router
