@@ -254,6 +254,21 @@ public extension Octokit {
         let router = NotificationRouter.markRepositoryNotificationsRead(configuration, owner, repository, lastReadAt)
         return router.load(session, completion: completion)
     }
+
+    /**
+     Marks A Notification As read
+     - parameter session: RequestKitURLSession, defaults to URLSession.sharedSession()
+     - parameter thread: The id of then nofication thread.
+     - parameter completion: Callback for the outcome of the fetch.
+     */
+    @discardableResult
+    func markNotificationThreadAsRead(_ session: RequestKitURLSession = URLSession.shared,
+                                      thread: String,
+                                      completion: @escaping (_ response: Error?) -> Void) -> URLSessionDataTaskProtocol?
+    {
+        let router = NotificationRouter.markNotificationThreadAsRead(configuration, thread)
+        return router.load(session, completion: completion)
+    }
 }
 
 // MARK: - Router
@@ -294,7 +309,7 @@ enum NotificationRouter: Router {
              .markRepositoryNotificationsRead:
             return .PUT
         case .markNotificationThreadAsRead:
-            return .POST
+            return .PATCH
         case .deleteThreadSubscription:
             return .DELETE
         }
@@ -311,8 +326,8 @@ enum NotificationRouter: Router {
             return "notifications"
         case let .getNotificationThread(_, threadID):
             return "notifications/threads/\(threadID)"
-        case .markNotificationThreadAsRead:
-            return "notifications/threads/"
+        case let .markNotificationThreadAsRead(_, threadID):
+            return "notifications/threads/\(threadID)"
         case let .getThreadSubscription(_, threadId),
              let .setThreadSubscription(_, threadId, _),
              let .deleteThreadSubscription(_, threadId):
@@ -331,8 +346,8 @@ enum NotificationRouter: Router {
             return ["last_read_at": lastReadAt, "read": "\(read)"]
         case .getNotificationThread:
             return [:]
-        case let .markNotificationThreadAsRead(_, threadID):
-            return ["thread_id": threadID]
+        case .markNotificationThreadAsRead:
+            return [:]
         case .getThreadSubscription:
             return [:]
         case .setThreadSubscription:
